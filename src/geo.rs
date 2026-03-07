@@ -1,0 +1,62 @@
+//! Geographic location types.
+
+use serde::{Deserialize, Serialize};
+
+/// A geographic location with optional altitude.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct GeoLocation {
+    /// Latitude in decimal degrees (WGS 84). Range: [-90.0, 90.0].
+    pub latitude: f64,
+    /// Longitude in decimal degrees (WGS 84). Range: [-180.0, 180.0].
+    pub longitude: f64,
+    /// Altitude above mean sea level in meters. `None` if unknown.
+    pub altitude_m: Option<f64>,
+}
+
+impl GeoLocation {
+    /// Create a new location from latitude and longitude.
+    pub fn new(latitude: f64, longitude: f64) -> Self {
+        Self {
+            latitude,
+            longitude,
+            altitude_m: None,
+        }
+    }
+
+    /// Create a new location with altitude.
+    pub fn with_altitude(latitude: f64, longitude: f64, altitude_m: f64) -> Self {
+        Self {
+            latitude,
+            longitude,
+            altitude_m: Some(altitude_m),
+        }
+    }
+
+    /// Returns `true` if latitude and longitude are within valid WGS 84 ranges.
+    pub fn is_valid(&self) -> bool {
+        (-90.0..=90.0).contains(&self.latitude) && (-180.0..=180.0).contains(&self.longitude)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn valid_location() {
+        let loc = GeoLocation::new(40.7128, -74.0060);
+        assert!(loc.is_valid());
+    }
+
+    #[test]
+    fn invalid_latitude() {
+        let loc = GeoLocation::new(91.0, 0.0);
+        assert!(!loc.is_valid());
+    }
+
+    #[test]
+    fn with_altitude() {
+        let loc = GeoLocation::with_altitude(35.0, 139.0, 40.0);
+        assert_eq!(loc.altitude_m, Some(40.0));
+    }
+}
