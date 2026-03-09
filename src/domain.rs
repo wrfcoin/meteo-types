@@ -19,9 +19,25 @@ pub enum EnvironmentalDomain {
     Hydrology,
 }
 
+impl core::fmt::Display for EnvironmentalDomain {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::Weather => write!(f, "Weather"),
+            Self::AirQuality => write!(f, "AirQuality"),
+            Self::WaterQuality => write!(f, "WaterQuality"),
+            Self::Wildfire => write!(f, "Wildfire"),
+            Self::Soil => write!(f, "Soil"),
+            Self::Ocean => write!(f, "Ocean"),
+            Self::Hydrology => write!(f, "Hydrology"),
+        }
+    }
+}
+
 /// Standard weather payload (surface observations).
 ///
-/// This is an alias to [`WeatherObservation`] to keep one canonical weather type.
+/// `WeatherPayload` is a type alias for [`WeatherObservation`], which is the canonical
+/// weather observation type. Use `WeatherObservation` for new code; `WeatherPayload`
+/// is provided for use inside [`ReportPayload::Weather`] to keep domain naming consistent.
 pub type WeatherPayload = WeatherObservation;
 
 /// Air quality payload.
@@ -146,11 +162,19 @@ impl ProvenanceChain {
 }
 
 /// A complete environmental observation report.
+///
+/// # Direct construction warning
+///
+/// When constructing via struct literal, the `domain` field must match the domain of
+/// `payload` — use `payload.domain()` to derive it. Mismatches will cause
+/// [`validate()`][EnvironmentalReport::validate] to return an error.
+/// Prefer [`EnvironmentalReport::new`] which auto-derives `domain` from `payload`.
+// NOTE: provenance field being added in parallel PR — already included here.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct EnvironmentalReport {
     /// Unique report identifier.
     pub report_id: String,
-    /// Environmental domain.
+    /// Environmental domain — must match `payload.domain()`.
     pub domain: EnvironmentalDomain,
     /// Station or sensor identifier.
     pub station_id: String,
@@ -170,10 +194,13 @@ pub struct EnvironmentalReport {
 }
 
 impl EnvironmentalReport {
-    /// Construct a report with validation on domain/payload consistency.
+    /// Construct a validated report.
+    ///
+    /// `domain` is derived automatically from `payload.domain()`, preventing
+    /// domain/payload mismatches at construction time.
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         report_id: String,
-        domain: EnvironmentalDomain,
         station_id: String,
         location: GeoLocation,
         observed_at: u64,
@@ -182,6 +209,7 @@ impl EnvironmentalReport {
         quality_score: Option<f64>,
         provenance: Option<ProvenanceChain>,
     ) -> Result<Self, String> {
+        let domain = payload.domain();
         let report = Self {
             report_id,
             domain,
@@ -302,10 +330,10 @@ mod tests {
     }
 
     #[test]
-    fn environmental_report_new_rejects_domain_mismatch() {
-        let result = EnvironmentalReport::new(
+    fn environmental_report_new_auto_derives_domain() {
+        // Domain is derived from payload — no mismatch possible via new()
+        let report = EnvironmentalReport::new(
             "rpt-002".into(),
-            EnvironmentalDomain::Weather,
             "station-1".into(),
             GeoLocation::new(40.0, -105.0),
             1709856000,
@@ -321,20 +349,17 @@ mod tests {
                 dissolved_oxygen_mgl: None,
                 depth_m: None,
             }),
-            Some(0.7),
             None,
-        );
-        assert_eq!(
-            result,
-            Err("environmental report domain does not match payload domain".to_string())
-        );
+            None,
+        )
+        .unwrap();
+        assert_eq!(report.domain, EnvironmentalDomain::Ocean);
     }
 
     #[test]
     fn environmental_report_new_rejects_invalid_quality_score() {
         let result = EnvironmentalReport::new(
             "rpt-003".into(),
-            EnvironmentalDomain::Weather,
             "station-1".into(),
             GeoLocation::new(40.0, -105.0),
             1709856000,
@@ -352,14 +377,16 @@ mod tests {
             Some(1.2),
             None,
         );
-        assert_eq!(result, Err("quality_score must be finite and in [0, 1]".to_string()));
+        assert_eq!(
+            result,
+            Err("quality_score must be finite and in [0, 1]".to_string())
+        );
     }
 
     #[test]
     fn environmental_report_new_accepts_matching_domain() {
         let report = EnvironmentalReport::new(
             "rpt-004".into(),
-            EnvironmentalDomain::Weather,
             "station-1".into(),
             GeoLocation::new(40.0, -105.0),
             1709856000,
@@ -379,5 +406,43 @@ mod tests {
         )
         .unwrap();
         assert!(report.is_valid());
+    }
+
+    #[test]
+    fn environmental_domain_display() {
+        assert_eq!(EnvironmentalDomain::Weather.to_string(), "Weather");
+        assert_eq!(EnvironmentalDomain::AirQuality.to_string(), "AirQuality");
+        assert_eq!(EnvironmentalDomain::WaterQuality.to_string(), "WaterQuality");
+        assert_eq!(EnvironmentalDomain::Wildfire.to_string(), "Wildfire");
+        assert_eq!(EnvironmentalDomain::Soil.to_string(), "Soil");
+        assert_eq!(EnvironmentalDomain::Ocean.to_string(), "Ocean");
+        assert_eq!(EnvironmentalDomain::Hydrology.to_string(), "Hydrology");
+    }
+
+    #[test]
+    fn environmental_report_serde_roundtrip() {
+        let report = EnvironmentalReport::new(
+            "rpt-serde".into(),
+            "station-serde".into(),
+            GeoLocation::new(51.5, -0.1),
+            1709856000,
+            1709856060,
+            ReportPayload::Weather(WeatherPayload {
+                temperature_c: Some(15.0),
+                humidity_percent: Some(72.0),
+                pressure_hpa: Some(1008.0),
+                wind_speed_ms: Some(3.5),
+                wind_direction_deg: Some(270.0),
+                precipitation_mm: Some(0.2),
+                dewpoint_c: Some(10.0),
+                visibility_m: Some(8000.0),
+            }),
+            Some(0.88),
+            None,
+        )
+        .unwrap();
+        let json = serde_json::to_string(&report).unwrap();
+        let deserialized: EnvironmentalReport = serde_json::from_str(&json).unwrap();
+        assert_eq!(report, deserialized);
     }
 }

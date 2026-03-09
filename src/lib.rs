@@ -20,8 +20,8 @@ pub mod quality;
 pub use domain::{
     AirQualityPayload, EnvironmentalDomain, EnvironmentalReport, HydrologyPayload, OceanPayload,
     ProvenanceChain, ProvenanceEntry, ReportPayload, SoilPayload, WaterQualityPayload,
-    WildfirePayload,
+    WeatherPayload, WildfirePayload,
 };
 pub use geo::GeoLocation;
 pub use observation::WeatherObservation;
-pub use quality::{DataQualityBand, DataQualityScore};
+pub use quality::{DataQualityBand, DataQualityError, DataQualityScore};
