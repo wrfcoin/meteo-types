@@ -32,9 +32,12 @@ impl GeoLocation {
         }
     }
 
-    /// Returns `true` if latitude and longitude are within valid WGS 84 ranges.
+    /// Returns `true` if coordinates are within valid WGS 84 ranges and altitude (if
+    /// present) is finite.
     pub fn is_valid(&self) -> bool {
-        (-90.0..=90.0).contains(&self.latitude) && (-180.0..=180.0).contains(&self.longitude)
+        (-90.0..=90.0).contains(&self.latitude)
+            && (-180.0..=180.0).contains(&self.longitude)
+            && self.altitude_m.is_none_or(|a| a.is_finite())
     }
 }
 
@@ -58,5 +61,17 @@ mod tests {
     fn with_altitude() {
         let loc = GeoLocation::with_altitude(35.0, 139.0, 40.0);
         assert_eq!(loc.altitude_m, Some(40.0));
+    }
+
+    #[test]
+    fn invalid_altitude_nan() {
+        let loc = GeoLocation::with_altitude(35.0, 139.0, f64::NAN);
+        assert!(!loc.is_valid());
+    }
+
+    #[test]
+    fn invalid_altitude_infinity() {
+        let loc = GeoLocation::with_altitude(0.0, 0.0, f64::INFINITY);
+        assert!(!loc.is_valid());
     }
 }

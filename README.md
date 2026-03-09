@@ -47,12 +47,11 @@ assert_eq!(obs.variable_count(), 4);
 ### Build a multi-domain environmental report
 
 ```rust
-use meteo_types::{EnvironmentalReport, ReportPayload, EnvironmentalDomain, GeoLocation};
-use meteo_types::domain::OceanPayload;
+use meteo_types::{EnvironmentalReport, ReportPayload, GeoLocation, OceanPayload};
 
+// domain is derived automatically from the payload — no mismatch possible
 let report = EnvironmentalReport::new(
     "rpt-001".into(),
-    EnvironmentalDomain::Ocean,
     "buoy-42".into(),
     GeoLocation::with_altitude(25.0, -90.0, 0.0),
     1709856000,
@@ -69,6 +68,7 @@ let report = EnvironmentalReport::new(
         depth_m: Some(0.0),
     }),
     Some(0.92),
+    None,  // provenance
 ).unwrap();
 assert!(report.is_valid());
 ```
@@ -76,11 +76,16 @@ assert!(report.is_valid());
 ### Classify data quality
 
 ```rust
-use meteo_types::{DataQualityScore, DataQualityBand};
+use meteo_types::{DataQualityScore, DataQualityBand, DataQualityError};
 
-let score = DataQualityScore::try_new(0.90, 0.95, 0.85).unwrap();
+// new() validates all components — returns Err on NaN, infinity, or out-of-range
+let score = DataQualityScore::new(0.90, 0.95, 0.85).unwrap();
 assert_eq!(score.band(), DataQualityBand::High);
-assert!(score.is_valid());
+
+match DataQualityScore::new(f64::NAN, 0.8, 0.9) {
+    Err(DataQualityError::InvalidOverall) => println!("overall must be in [0, 1]"),
+    _ => unreachable!(),
+}
 ```
 
 ## Design principles
@@ -93,8 +98,9 @@ assert!(score.is_valid());
   records (e.g., -89.2 C to 56.7 C for temperature).
 - **Tagged serialization** -- `ReportPayload` uses `#[serde(tag = "domain", content = "data")]`
   for clean JSON like `{"domain": "AirQuality", "data": {...}}`.
-- **Validated constructors** -- `DataQualityScore::try_new()` and `EnvironmentalReport::new()`
-  enforce score ranges and domain/payload consistency.
+- **Validated constructors** -- `DataQualityScore::new()` returns `Result<_, DataQualityError>`
+  with typed variants. `EnvironmentalReport::new()` auto-derives `domain` from `payload.domain()`,
+  preventing domain/payload mismatches entirely.
 - **No runtime coupling** -- types are pure data. No database, no network, no async. Use them in
   embedded systems, web backends, CLI tools, or blockchain nodes.
 

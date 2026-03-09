@@ -116,4 +116,21 @@ mod tests {
         assert_eq!(obs.variable_count(), 2);
         assert!(obs.is_physically_plausible());
     }
+
+    #[test]
+    fn serde_roundtrip() {
+        let obs = WeatherObservation {
+            temperature_c: Some(22.5),
+            humidity_percent: Some(65.0),
+            pressure_hpa: Some(1013.25),
+            wind_speed_ms: Some(5.0),
+            wind_direction_deg: Some(180.0),
+            precipitation_mm: Some(0.0),
+            dewpoint_c: Some(15.0),
+            visibility_m: Some(10_000.0),
+        };
+        let json = serde_json::to_string(&obs).unwrap();
+        let deserialized: WeatherObservation = serde_json::from_str(&json).unwrap();
+        assert_eq!(obs, deserialized);
+    }
 }
