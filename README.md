@@ -50,14 +50,14 @@ assert_eq!(obs.variable_count(), 4);
 use meteo_types::{EnvironmentalReport, ReportPayload, EnvironmentalDomain, GeoLocation};
 use meteo_types::domain::OceanPayload;
 
-let report = EnvironmentalReport {
-    report_id: "rpt-001".into(),
-    domain: EnvironmentalDomain::Ocean,
-    station_id: "buoy-42".into(),
-    location: GeoLocation::with_altitude(25.0, -90.0, 0.0),
-    observed_at: 1709856000,
-    submitted_at: 1709856060,
-    payload: ReportPayload::Ocean(OceanPayload {
+let report = EnvironmentalReport::new(
+    "rpt-001".into(),
+    EnvironmentalDomain::Ocean,
+    "buoy-42".into(),
+    GeoLocation::with_altitude(25.0, -90.0, 0.0),
+    1709856000,
+    1709856060,
+    ReportPayload::Ocean(OceanPayload {
         sea_surface_temperature_c: Some(26.5),
         salinity_psu: Some(35.0),
         wave_height_m: Some(1.2),
@@ -68,8 +68,9 @@ let report = EnvironmentalReport {
         dissolved_oxygen_mgl: None,
         depth_m: Some(0.0),
     }),
-    quality_score: Some(0.92),
-};
+    Some(0.92),
+).unwrap();
+assert!(report.is_valid());
 ```
 
 ### Classify data quality
@@ -77,8 +78,9 @@ let report = EnvironmentalReport {
 ```rust
 use meteo_types::{DataQualityScore, DataQualityBand};
 
-let score = DataQualityScore::new(0.90, 0.95, 0.85);
+let score = DataQualityScore::try_new(0.90, 0.95, 0.85).unwrap();
 assert_eq!(score.band(), DataQualityBand::High);
+assert!(score.is_valid());
 ```
 
 ## Design principles
@@ -91,6 +93,8 @@ assert_eq!(score.band(), DataQualityBand::High);
   records (e.g., -89.2 C to 56.7 C for temperature).
 - **Tagged serialization** -- `ReportPayload` uses `#[serde(tag = "domain", content = "data")]`
   for clean JSON like `{"domain": "AirQuality", "data": {...}}`.
+- **Validated constructors** -- `DataQualityScore::try_new()` and `EnvironmentalReport::new()`
+  enforce score ranges and domain/payload consistency.
 - **No runtime coupling** -- types are pure data. No database, no network, no async. Use them in
   embedded systems, web backends, CLI tools, or blockchain nodes.
 
@@ -119,12 +123,10 @@ Tracking issue: [wrfcoin/core4#543](https://github.com/wrfcoin/core4/issues/543)
 
 ## Known issues
 
-See [#1](https://github.com/wrfcoin/meteo-types/issues/1) for code review feedback on v0.1.0:
+See [#1](https://github.com/wrfcoin/meteo-types/issues/1) for overall code review context.
+Remaining major item for v0.2.0:
 
 - `WeatherPayload` and `WeatherObservation` overlap with inconsistent field names
-- `DataQualityScore::new()` accepts invalid values (NaN, negatives)
-- `EnvironmentalReport.domain` field is redundant with `payload.domain()`
-- Enums should be `#[non_exhaustive]` before downstream adoption
 
 ## License
 

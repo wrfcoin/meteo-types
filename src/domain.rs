@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 
 /// Environmental observation domain.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[non_exhaustive]
 pub enum EnvironmentalDomain {
     Weather,
     AirQuality,
@@ -108,6 +109,7 @@ pub struct HydrologyPayload {
 /// Tagged union of all environmental domain payloads.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "domain", content = "data")]
+#[non_exhaustive]
 pub enum ReportPayload {
     Weather(WeatherPayload),
     AirQuality(AirQualityPayload),
@@ -152,6 +154,51 @@ pub struct EnvironmentalReport {
     pub payload: ReportPayload,
     /// Optional quality score [0.0, 1.0].
     pub quality_score: Option<f64>,
+}
+
+impl EnvironmentalReport {
+    /// Construct a report with validation on domain/payload consistency.
+    pub fn new(
+        report_id: String,
+        domain: EnvironmentalDomain,
+        station_id: String,
+        location: GeoLocation,
+        observed_at: u64,
+        submitted_at: u64,
+        payload: ReportPayload,
+        quality_score: Option<f64>,
+    ) -> Result<Self, &'static str> {
+        let report = Self {
+            report_id,
+            domain,
+            station_id,
+            location,
+            observed_at,
+            submitted_at,
+            payload,
+            quality_score,
+        };
+        report.validate()?;
+        Ok(report)
+    }
+
+    /// Validate report consistency and field ranges.
+    pub fn validate(&self) -> Result<(), &'static str> {
+        if self.domain != self.payload.domain() {
+            return Err("environmental report domain does not match payload domain");
+        }
+        if let Some(score) = self.quality_score {
+            if !score.is_finite() || !(0.0..=1.0).contains(&score) {
+                return Err("quality_score must be finite and in [0, 1]");
+            }
+        }
+        Ok(())
+    }
+
+    /// Return whether report consistency checks pass.
+    pub fn is_valid(&self) -> bool {
+        self.validate().is_ok()
+    }
 }
 
 #[cfg(test)]
@@ -212,5 +259,81 @@ mod tests {
         };
         assert_eq!(report.domain, EnvironmentalDomain::Ocean);
         assert!(report.location.is_valid());
+        assert!(report.is_valid());
+    }
+
+    #[test]
+    fn environmental_report_new_rejects_domain_mismatch() {
+        let result = EnvironmentalReport::new(
+            "rpt-002".into(),
+            EnvironmentalDomain::Weather,
+            "station-1".into(),
+            GeoLocation::new(40.0, -105.0),
+            1709856000,
+            1709856060,
+            ReportPayload::Ocean(OceanPayload {
+                sea_surface_temperature_c: Some(21.0),
+                salinity_psu: Some(33.0),
+                wave_height_m: None,
+                wave_period_s: None,
+                current_speed_ms: None,
+                current_direction_deg: None,
+                chlorophyll_a_mgl: None,
+                dissolved_oxygen_mgl: None,
+                depth_m: None,
+            }),
+            Some(0.7),
+        );
+        assert_eq!(
+            result,
+            Err("environmental report domain does not match payload domain")
+        );
+    }
+
+    #[test]
+    fn environmental_report_new_rejects_invalid_quality_score() {
+        let result = EnvironmentalReport::new(
+            "rpt-003".into(),
+            EnvironmentalDomain::Weather,
+            "station-1".into(),
+            GeoLocation::new(40.0, -105.0),
+            1709856000,
+            1709856060,
+            ReportPayload::Weather(WeatherPayload {
+                temperature_c: Some(18.0),
+                humidity_pct: Some(50.0),
+                pressure_hpa: None,
+                wind_speed_ms: None,
+                wind_direction_deg: None,
+                precipitation_mm: None,
+                visibility_m: None,
+            }),
+            Some(1.2),
+        );
+        assert_eq!(result, Err("quality_score must be finite and in [0, 1]"));
+    }
+
+    #[test]
+    fn environmental_report_new_accepts_matching_domain() {
+        let report = EnvironmentalReport::new(
+            "rpt-004".into(),
+            EnvironmentalDomain::Weather,
+            "station-1".into(),
+            GeoLocation::new(40.0, -105.0),
+            1709856000,
+            1709856060,
+            ReportPayload::Weather(WeatherPayload {
+                temperature_c: Some(18.0),
+                humidity_pct: Some(50.0),
+                pressure_hpa: None,
+                wind_speed_ms: None,
+                wind_direction_deg: None,
+                precipitation_mm: None,
+                visibility_m: None,
+            }),
+            Some(0.95),
+        )
+        .unwrap();
+        assert!(report.is_valid());
     }
 }
