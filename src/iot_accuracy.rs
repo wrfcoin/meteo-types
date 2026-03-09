@@ -53,6 +53,8 @@ impl std::error::Error for IoTAccuracyError {}
 
 /// A single sensor reading paired with a reference (ground truth) value.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts", ts(export, export_to = "bindings/"))]
 pub struct SensorReferencePair {
     /// Value reported by the IoT sensor.
     pub sensor_value: f64,
@@ -89,6 +91,8 @@ impl SensorReferencePair {
 /// All error metrics use the same units as the underlying measurement (e.g.,
 /// degrees C for temperature sensors, hPa for pressure sensors).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts", ts(export, export_to = "bindings/"))]
 pub struct SensorAccuracyMetrics {
     /// Mean Absolute Error. Non-negative.
     pub mae: f64,
@@ -210,6 +214,8 @@ impl SensorAccuracyMetrics {
 ///
 /// Thresholds: Excellent >= 0.90, Good >= 0.75, Marginal >= 0.50, Poor < 0.50.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts", ts(export, export_to = "bindings/"))]
 #[non_exhaustive]
 pub enum SensorAccuracyBand {
     /// Excellent accuracy — full reward eligibility.
@@ -264,6 +270,8 @@ impl core::fmt::Display for SensorAccuracyBand {
 
 /// Rolling accuracy window metadata for a sensor over a time period.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts", ts(export, export_to = "bindings/"))]
 pub struct AccuracyWindow {
     /// Unix timestamp of the earliest pair in the window.
     pub window_start: u64,
