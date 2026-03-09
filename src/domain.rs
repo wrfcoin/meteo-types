@@ -3,7 +3,7 @@
 //! Each domain has a typed payload struct with SI / standard units.
 //! The [`ReportPayload`] enum wraps all domains for tagged serialization.
 
-use crate::geo::GeoLocation;
+use crate::{geo::GeoLocation, observation::WeatherObservation};
 use serde::{Deserialize, Serialize};
 
 /// Environmental observation domain.
@@ -20,16 +20,9 @@ pub enum EnvironmentalDomain {
 }
 
 /// Standard weather payload (surface observations).
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct WeatherPayload {
-    pub temperature_c: Option<f64>,
-    pub humidity_pct: Option<f64>,
-    pub pressure_hpa: Option<f64>,
-    pub wind_speed_ms: Option<f64>,
-    pub wind_direction_deg: Option<f64>,
-    pub precipitation_mm: Option<f64>,
-    pub visibility_m: Option<f64>,
-}
+///
+/// This is an alias to [`WeatherObservation`] to keep one canonical weather type.
+pub type WeatherPayload = WeatherObservation;
 
 /// Air quality payload.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -209,14 +202,31 @@ mod tests {
     fn report_payload_domain() {
         let payload = ReportPayload::Weather(WeatherPayload {
             temperature_c: Some(22.0),
-            humidity_pct: Some(65.0),
+            humidity_percent: Some(65.0),
             pressure_hpa: Some(1013.25),
             wind_speed_ms: None,
             wind_direction_deg: None,
             precipitation_mm: None,
+            dewpoint_c: Some(14.0),
             visibility_m: None,
         });
         assert_eq!(payload.domain(), EnvironmentalDomain::Weather);
+    }
+
+    #[test]
+    fn weather_payload_is_weather_observation_alias() {
+        let payload: WeatherPayload = WeatherObservation {
+            temperature_c: Some(18.5),
+            humidity_percent: Some(55.0),
+            pressure_hpa: None,
+            wind_speed_ms: None,
+            wind_direction_deg: None,
+            precipitation_mm: None,
+            dewpoint_c: Some(9.0),
+            visibility_m: None,
+        };
+        assert!(payload.is_physically_plausible());
+        assert_eq!(payload.variable_count(), 3);
     }
 
     #[test]
@@ -301,11 +311,12 @@ mod tests {
             1709856060,
             ReportPayload::Weather(WeatherPayload {
                 temperature_c: Some(18.0),
-                humidity_pct: Some(50.0),
+                humidity_percent: Some(50.0),
                 pressure_hpa: None,
                 wind_speed_ms: None,
                 wind_direction_deg: None,
                 precipitation_mm: None,
+                dewpoint_c: None,
                 visibility_m: None,
             }),
             Some(1.2),
@@ -324,11 +335,12 @@ mod tests {
             1709856060,
             ReportPayload::Weather(WeatherPayload {
                 temperature_c: Some(18.0),
-                humidity_pct: Some(50.0),
+                humidity_percent: Some(50.0),
                 pressure_hpa: None,
                 wind_speed_ms: None,
                 wind_direction_deg: None,
                 precipitation_mm: None,
+                dewpoint_c: None,
                 visibility_m: None,
             }),
             Some(0.95),
