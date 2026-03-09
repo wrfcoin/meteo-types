@@ -44,8 +44,7 @@ impl WeatherObservation {
             self.humidity_percent.map(|v| (0.0..=100.0).contains(&v)),
             self.pressure_hpa.map(|v| (870.0..=1084.0).contains(&v)),
             self.wind_speed_ms.map(|v| (0.0..=113.0).contains(&v)),
-            self.wind_direction_deg
-                .map(|v| (0.0..360.0).contains(&v)),
+            self.wind_direction_deg.map(|v| (0.0..360.0).contains(&v)),
             self.precipitation_mm.map(|v| (0.0..=500.0).contains(&v)),
             self.dewpoint_c.map(|v| (-80.0..=35.0).contains(&v)),
             self.visibility_m.map(|v| (0.0..=100_000.0).contains(&v)),
