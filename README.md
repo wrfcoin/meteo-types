@@ -14,7 +14,7 @@ tricks.
 | Module | Types | Purpose |
 |--------|-------|---------|
 | `observation` | `WeatherObservation` | Surface weather with 8 standard variables (temperature, humidity, pressure, wind, precipitation, dewpoint, visibility) |
-| `domain` | `WeatherPayload`, `AirQualityPayload`, `WaterQualityPayload`, `WildfirePayload`, `SoilPayload`, `OceanPayload`, `HydrologyPayload`, `ReportPayload`, `EnvironmentalReport` | Typed payloads for 7 environmental domains with tagged serialization |
+| `domain` | `WeatherPayload` (alias of `WeatherObservation`), `AirQualityPayload`, `WaterQualityPayload`, `WildfirePayload`, `SoilPayload`, `OceanPayload`, `HydrologyPayload`, `ReportPayload`, `EnvironmentalReport` | Typed payloads for 7 environmental domains with tagged serialization |
 | `quality` | `DataQualityScore`, `DataQualityBand` | Quality scoring and classification (High / Borderline / WarningOnly / Low) |
 | `geo` | `GeoLocation` | WGS 84 coordinates with optional altitude and validation |
 
@@ -102,7 +102,7 @@ assert!(score.is_valid());
 
 | Domain | Payload struct | Key variables |
 |--------|---------------|---------------|
-| Weather | `WeatherPayload` | Temperature, humidity, pressure, wind, precipitation, visibility |
+| Weather | `WeatherPayload` | Temperature, humidity, pressure, wind, precipitation, dewpoint, visibility |
 | Air Quality | `AirQualityPayload` | AQI, PM2.5, PM10, O3, NO2, SO2, CO |
 | Water Quality | `WaterQualityPayload` | pH, dissolved oxygen, turbidity, conductivity, TDS |
 | Wildfire | `WildfirePayload` | Fire radiative power, burn area, smoke AOD, containment |
@@ -124,9 +124,7 @@ Tracking issue: [wrfcoin/core4#543](https://github.com/wrfcoin/core4/issues/543)
 ## Known issues
 
 See [#1](https://github.com/wrfcoin/meteo-types/issues/1) for overall code review context.
-Remaining major item for v0.2.0:
-
-- `WeatherPayload` and `WeatherObservation` overlap with inconsistent field names
+With this change, all major items from that review are addressed.
 
 ## License
 
