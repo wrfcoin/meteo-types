@@ -17,7 +17,11 @@ pub mod observation;
 pub mod quality;
 
 // Re-export core types at crate root for convenience.
-pub use domain::{EnvironmentalDomain, EnvironmentalReport, ReportPayload};
+pub use domain::{
+    AirQualityPayload, EnvironmentalDomain, EnvironmentalReport, HydrologyPayload, OceanPayload,
+    ProvenanceChain, ProvenanceEntry, ReportPayload, SoilPayload, WaterQualityPayload,
+    WildfirePayload,
+};
 pub use geo::GeoLocation;
 pub use observation::WeatherObservation;
 pub use quality::{DataQualityBand, DataQualityScore};

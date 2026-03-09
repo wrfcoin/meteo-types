@@ -128,6 +128,23 @@ impl ReportPayload {
     }
 }
 
+/// A single provenance attestation step.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ProvenanceEntry {
+    pub attester_id: String,
+    pub timestamp: u64,
+}
+
+/// Lightweight provenance chain: ordered list of attestation entries.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ProvenanceChain(pub Vec<ProvenanceEntry>);
+
+impl ProvenanceChain {
+    pub fn new(entries: Vec<ProvenanceEntry>) -> Self { Self(entries) }
+    pub fn is_empty(&self) -> bool { self.0.is_empty() }
+    pub fn len(&self) -> usize { self.0.len() }
+}
+
 /// A complete environmental observation report.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct EnvironmentalReport {
@@ -147,6 +164,9 @@ pub struct EnvironmentalReport {
     pub payload: ReportPayload,
     /// Optional quality score [0.0, 1.0].
     pub quality_score: Option<f64>,
+    /// Optional lightweight provenance chain.
+    #[serde(default)]
+    pub provenance: Option<ProvenanceChain>,
 }
 
 impl EnvironmentalReport {
@@ -160,7 +180,8 @@ impl EnvironmentalReport {
         submitted_at: u64,
         payload: ReportPayload,
         quality_score: Option<f64>,
-    ) -> Result<Self, &'static str> {
+        provenance: Option<ProvenanceChain>,
+    ) -> Result<Self, String> {
         let report = Self {
             report_id,
             domain,
@@ -170,19 +191,26 @@ impl EnvironmentalReport {
             submitted_at,
             payload,
             quality_score,
+            provenance,
         };
         report.validate()?;
         Ok(report)
     }
 
     /// Validate report consistency and field ranges.
-    pub fn validate(&self) -> Result<(), &'static str> {
+    pub fn validate(&self) -> Result<(), String> {
+        if self.report_id.is_empty() {
+            return Err("report_id must not be empty".into());
+        }
+        if self.station_id.is_empty() {
+            return Err("station_id must not be empty".into());
+        }
         if self.domain != self.payload.domain() {
-            return Err("environmental report domain does not match payload domain");
+            return Err("environmental report domain does not match payload domain".into());
         }
         if let Some(score) = self.quality_score {
             if !score.is_finite() || !(0.0..=1.0).contains(&score) {
-                return Err("quality_score must be finite and in [0, 1]");
+                return Err("quality_score must be finite and in [0, 1]".into());
             }
         }
         Ok(())
@@ -266,6 +294,7 @@ mod tests {
                 depth_m: Some(0.0),
             }),
             quality_score: Some(0.92),
+            provenance: None,
         };
         assert_eq!(report.domain, EnvironmentalDomain::Ocean);
         assert!(report.location.is_valid());
@@ -293,10 +322,11 @@ mod tests {
                 depth_m: None,
             }),
             Some(0.7),
+            None,
         );
         assert_eq!(
             result,
-            Err("environmental report domain does not match payload domain")
+            Err("environmental report domain does not match payload domain".to_string())
         );
     }
 
@@ -320,8 +350,9 @@ mod tests {
                 visibility_m: None,
             }),
             Some(1.2),
+            None,
         );
-        assert_eq!(result, Err("quality_score must be finite and in [0, 1]"));
+        assert_eq!(result, Err("quality_score must be finite and in [0, 1]".to_string()));
     }
 
     #[test]
@@ -344,6 +375,7 @@ mod tests {
                 visibility_m: None,
             }),
             Some(0.95),
+            None,
         )
         .unwrap();
         assert!(report.is_valid());
