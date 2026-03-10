@@ -10,9 +10,11 @@
 //! - [`domain`] — Environmental domain payloads (weather, air quality, water, etc.)
 //! - [`quality`] — Data quality scoring and classification
 //! - [`geo`] — Geographic location types
+//! - [`iot_accuracy`] — IoT sensor accuracy verification metrics
 
 pub mod domain;
 pub mod geo;
+pub mod iot_accuracy;
 pub mod observation;
 pub mod quality;
 
@@ -23,5 +25,9 @@ pub use domain::{
     WeatherPayload, WildfirePayload,
 };
 pub use geo::GeoLocation;
+pub use iot_accuracy::{
+    AccuracyWindow, IoTAccuracyError, SensorAccuracyBand, SensorAccuracyMetrics,
+    SensorReferencePair,
+};
 pub use observation::WeatherObservation;
 pub use quality::{DataQualityBand, DataQualityError, DataQualityScore};
