@@ -8,6 +8,8 @@ use serde::{Deserialize, Serialize};
 
 /// Environmental observation domain.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts", ts(export, export_to = "bindings/"))]
 #[non_exhaustive]
 pub enum EnvironmentalDomain {
     Weather,
@@ -42,6 +44,8 @@ pub type WeatherPayload = WeatherObservation;
 
 /// Air quality payload.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts", ts(export, export_to = "bindings/"))]
 pub struct AirQualityPayload {
     pub aqi: Option<u16>,
     pub pm25_ugm3: Option<f64>,
@@ -54,6 +58,8 @@ pub struct AirQualityPayload {
 
 /// Water quality payload.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts", ts(export, export_to = "bindings/"))]
 pub struct WaterQualityPayload {
     pub ph: Option<f64>,
     pub dissolved_oxygen_mgl: Option<f64>,
@@ -65,6 +71,8 @@ pub struct WaterQualityPayload {
 
 /// Wildfire observation payload.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts", ts(export, export_to = "bindings/"))]
 pub struct WildfirePayload {
     pub fire_radiative_power_mw: Option<f64>,
     pub burn_area_km2: Option<f64>,
@@ -76,6 +84,8 @@ pub struct WildfirePayload {
 
 /// Soil observation payload.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts", ts(export, export_to = "bindings/"))]
 pub struct SoilPayload {
     pub moisture_pct: Option<f64>,
     pub temperature_c: Option<f64>,
@@ -90,6 +100,8 @@ pub struct SoilPayload {
 
 /// Ocean observation payload.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts", ts(export, export_to = "bindings/"))]
 pub struct OceanPayload {
     pub sea_surface_temperature_c: Option<f64>,
     pub salinity_psu: Option<f64>,
@@ -104,6 +116,8 @@ pub struct OceanPayload {
 
 /// Hydrology observation payload.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts", ts(export, export_to = "bindings/"))]
 pub struct HydrologyPayload {
     pub river_discharge_m3s: Option<f64>,
     pub water_level_m: Option<f64>,
@@ -117,6 +131,8 @@ pub struct HydrologyPayload {
 
 /// Tagged union of all environmental domain payloads.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts", ts(export, export_to = "bindings/"))]
 #[serde(tag = "domain", content = "data")]
 #[non_exhaustive]
 pub enum ReportPayload {
@@ -146,6 +162,8 @@ impl ReportPayload {
 
 /// A single provenance attestation step.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts", ts(export, export_to = "bindings/"))]
 pub struct ProvenanceEntry {
     pub attester_id: String,
     pub timestamp: u64,
@@ -153,6 +171,8 @@ pub struct ProvenanceEntry {
 
 /// Lightweight provenance chain: ordered list of attestation entries.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts", ts(export, export_to = "bindings/"))]
 pub struct ProvenanceChain(pub Vec<ProvenanceEntry>);
 
 impl ProvenanceChain {
@@ -171,6 +191,8 @@ impl ProvenanceChain {
 /// Prefer [`EnvironmentalReport::new`] which auto-derives `domain` from `payload`.
 // NOTE: provenance field being added in parallel PR — already included here.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts", ts(export, export_to = "bindings/"))]
 pub struct EnvironmentalReport {
     /// Unique report identifier.
     pub report_id: String,

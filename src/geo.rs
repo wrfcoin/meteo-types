@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 
 /// A geographic location with optional altitude.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts", ts(export, export_to = "bindings/"))]
 pub struct GeoLocation {
     /// Latitude in decimal degrees (WGS 84). Range: [-90.0, 90.0].
     pub latitude: f64,

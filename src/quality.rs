@@ -31,6 +31,8 @@ impl std::error::Error for DataQualityError {}
 ///
 /// Each component is in [0.0, 1.0] where 1.0 is perfect quality.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts", ts(export, export_to = "bindings/"))]
 pub struct DataQualityScore {
     /// Overall quality score (typically a weighted combination of components).
     pub overall: f64,
@@ -145,6 +147,8 @@ impl DataQualityScore {
 /// - WarningOnly: >= 0.50
 /// - Low: < 0.50
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts", ts(export, export_to = "bindings/"))]
 #[non_exhaustive]
 pub enum DataQualityBand {
     /// High quality — data is reliable and reward-eligible.

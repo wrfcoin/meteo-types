@@ -7,6 +7,8 @@ use serde::{Deserialize, Serialize};
 /// All fields are optional — sensors may not report every variable.
 /// Units follow SI / WMO conventions.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts", ts(export, export_to = "bindings/"))]
 pub struct WeatherObservation {
     /// Air temperature in degrees Celsius.
     pub temperature_c: Option<f64>,
