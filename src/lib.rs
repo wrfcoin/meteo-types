@@ -11,12 +11,14 @@
 //! - [`quality`] — Data quality scoring and classification
 //! - [`geo`] — Geographic location types
 //! - [`iot_accuracy`] — IoT sensor accuracy verification metrics
+//! - [`validation`] — Physics validation types for data quality checking
 
 pub mod domain;
 pub mod geo;
 pub mod iot_accuracy;
 pub mod observation;
 pub mod quality;
+pub mod validation;
 
 // Re-export core types at crate root for convenience.
 pub use domain::{
@@ -31,3 +33,4 @@ pub use iot_accuracy::{
 };
 pub use observation::WeatherObservation;
 pub use quality::{DataQualityBand, DataQualityError, DataQualityScore};
+pub use validation::{PhysicsRangePolicy, PhysicsViolation, ValidationReading};
