@@ -177,7 +177,9 @@ pub struct ProvenanceChain(pub Vec<ProvenanceEntry>);
 
 impl ProvenanceChain {
     pub fn new(entries: Vec<ProvenanceEntry>) -> Self { Self(entries) }
+    /// Returns `true` if the chain contains no attestation entries.
     pub fn is_empty(&self) -> bool { self.0.is_empty() }
+    /// Returns the number of attestation entries in the chain.
     pub fn len(&self) -> usize { self.0.len() }
 }
 
@@ -248,6 +250,7 @@ impl EnvironmentalReport {
     }
 
     /// Validate report consistency and field ranges.
+    #[must_use = "validation errors must be handled"]
     pub fn validate(&self) -> Result<(), String> {
         if self.report_id.is_empty() {
             return Err("report_id must not be empty".into());
@@ -267,6 +270,7 @@ impl EnvironmentalReport {
     }
 
     /// Return whether report consistency checks pass.
+    #[must_use]
     pub fn is_valid(&self) -> bool {
         self.validate().is_ok()
     }

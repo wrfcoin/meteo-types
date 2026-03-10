@@ -40,6 +40,7 @@ impl WeatherObservation {
     /// - Precipitation: 0–500 mm (per observation period)
     /// - Dewpoint: -80°C to 35°C
     /// - Visibility: 0–100,000 m
+    #[must_use]
     pub fn is_physically_plausible(&self) -> bool {
         let checks = [
             self.temperature_c.map(|v| (-89.2..=56.7).contains(&v)),
