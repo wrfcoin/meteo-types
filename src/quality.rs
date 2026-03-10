@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 /// Errors returned by [`DataQualityScore::new`].
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum DataQualityError {
     /// The `overall` score is not finite or not in [0.0, 1.0].
     InvalidOverall,
@@ -100,6 +101,7 @@ impl DataQualityScore {
     /// Create a new quality score with runtime validation.
     ///
     /// Prefer [`Self::new`] which returns a typed [`DataQualityError`].
+    #[must_use = "validation errors must be handled"]
     pub fn try_new(
         overall: f64,
         range_score: f64,
@@ -115,11 +117,13 @@ impl DataQualityScore {
     }
 
     /// Return whether all score components are finite and in [0, 1].
+    #[must_use]
     pub fn is_valid(&self) -> bool {
         self.validate().is_ok()
     }
 
     /// Validate score components.
+    #[must_use = "validation errors must be handled"]
     pub fn validate(&self) -> Result<(), &'static str> {
         if !Self::is_component_valid(self.overall) {
             return Err("overall must be finite and in [0, 1]");

@@ -36,6 +36,7 @@ impl GeoLocation {
 
     /// Returns `true` if coordinates are within valid WGS 84 ranges and altitude (if
     /// present) is finite.
+    #[must_use]
     pub fn is_valid(&self) -> bool {
         (-90.0..=90.0).contains(&self.latitude)
             && (-180.0..=180.0).contains(&self.longitude)
